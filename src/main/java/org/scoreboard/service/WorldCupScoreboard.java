@@ -17,7 +17,7 @@ public class WorldCupScoreboard implements Scoreboard {
 
     private final MatchRepository matchRepository;
 
-    private final SortingPolicy sortingPolicy;
+    private final SortingPolicy<Match> sortingPolicy;
 
     @Override
     public Match startMatch(Team homeTeam, Team awayTeam) {
