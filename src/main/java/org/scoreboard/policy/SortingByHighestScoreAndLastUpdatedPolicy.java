@@ -6,7 +6,7 @@ import java.util.Comparator;
 
 import static java.util.Comparator.comparing;
 
-public class SortingByHighestScoreAndLastUpdatedPolicy implements SortingPolicy {
+public class SortingByHighestScoreAndLastUpdatedPolicy implements SortingPolicy<Match> {
     @Override
     public Comparator<Match> apply() {
         return comparing(Match::totalScore).reversed()
