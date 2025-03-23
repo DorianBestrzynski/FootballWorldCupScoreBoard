@@ -12,6 +12,9 @@ This project implements a **Live Football World Cup Scoreboard** as an in-memory
 ## Simplifications
 - The project does **not** use a database. Instead, it relies on an **in-memory list** (`InMemoryMatchRepository`) to store matches.
 - **Not thread-safe** – concurrent access might lead to inconsistencies, but this can be solved with `ConcurrentHashMap` and `synchronized` blocks.
+- In real work scenario all changes are created in different branches and after review process are merged to master. However for simplification, as I was the only person working on this repo, I was pushing changes directly to master.
+- I was taking into account hexagonal architecture, however for now this library is really simple and has no external sources so I went with simpler approach.
+
 
 ## Immutability Approach
 - The core models (`Match`, `Team`) are **immutable** to prevent unintended modifications and improve thread safety.
@@ -38,4 +41,4 @@ To execute unit and component tests:
 - Matches are sorted in **descending order by total score**.
 - If two matches have the same score, the most **recently updated** match appears first.
 - Once a match **finishes**, it is **removed** from the scoreboard.
-- However finished matches remain in storage for statistics purposes.
+- Finished matches remain in storage for statistics purposes.
