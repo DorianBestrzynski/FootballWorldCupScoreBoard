@@ -25,10 +25,8 @@ Project is fully tested, it contains:
 - Components tests checking whole flow.
 
 ## Running Tests
-To execute unit tests:
-```sh
-./gradlew test
-```
+To execute unit and component tests:
+```./gradlew test```
 
 ## Technologies Used
 - **Java** - Core language
