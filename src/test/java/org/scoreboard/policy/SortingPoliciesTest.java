@@ -13,11 +13,11 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SortingPoliciesTest {
-    private SortingPolicy sortingPolicy;
+    private SortingPolicy<Match> sortingPolicy;
 
     @BeforeEach
     void setUp() {
-        sortingPolicy = SortingPolicy.create();
+        sortingPolicy = new SortingByHighestScoreAndLastUpdatedPolicy();
     }
 
     @ParameterizedTest(name = "{0}")

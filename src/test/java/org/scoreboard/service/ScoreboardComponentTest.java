@@ -7,7 +7,7 @@ import org.scoreboard.exception.ValidationException;
 import org.scoreboard.factory.MatchFactory;
 import org.scoreboard.factory.MatchValidator;
 import org.scoreboard.model.Team;
-import org.scoreboard.policy.SortingPolicy;
+import org.scoreboard.policy.SortingByHighestScoreAndLastUpdatedPolicy;
 import org.scoreboard.repository.InMemoryMatchRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -162,10 +162,10 @@ class ScoreboardComponentTest {
     }
 
     private static WorldCupScoreboard createScoreboard() {
-        MatchValidator matchValidator = new MatchValidator();
-        MatchFactory matchFactory = new MatchFactory(matchValidator);
-        InMemoryMatchRepository matchRepository = new InMemoryMatchRepository();
-        SortingPolicy sortingPolicy = SortingPolicy.create();
+        var matchValidator = new MatchValidator();
+        var matchFactory = new MatchFactory(matchValidator);
+        var matchRepository = new InMemoryMatchRepository();
+        var sortingPolicy = new SortingByHighestScoreAndLastUpdatedPolicy();
         return new WorldCupScoreboard(matchFactory, matchRepository, sortingPolicy);
     }
 

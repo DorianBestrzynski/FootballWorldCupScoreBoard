@@ -30,7 +30,7 @@ class ScoreboardTest {
     @Mock
     private MatchRepository matchRepository;
     @Mock
-    private SortingPolicy sortingPolicy;
+    private SortingPolicy<Match> sortingPolicy;
 
     @InjectMocks
     private WorldCupScoreboard scoreboard;
