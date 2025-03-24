@@ -22,13 +22,15 @@ class InMemoryMatchRepositoryTest {
     @Nested
     class SaveMethod {
         @Test
-        void shouldSaveMatchSuccessfully() {
-            var match = match("match-1");
+        void shouldSaveMatchAndAddActiveTeamIdsSuccessfully() {
+            var match = match("match-1", "home-team-id", "away-team-id");
 
             var result = repository.save(match);
 
             assertThat(result).isSameAs(match);
             assertThat(repository.findById("match-1")).contains(match);
+            assertThat(repository.isTeamParticipatingInLiveMatch("home-team-id")).isTrue();
+            assertThat(repository.isTeamParticipatingInLiveMatch("away-team-id")).isTrue();
         }
 
         @Test
@@ -65,6 +67,50 @@ class InMemoryMatchRepositoryTest {
             repository.put(match2);
 
             assertThat(repository.findById("match-1")).contains(match2);
+        }
+    }
+
+    @Nested
+    class RemoveTeamsFromActiveList {
+        @Test
+        void shouldRemoveTeamsFromActiveListSuccessfully() {
+            var match = match("match-1", "home-team-id", "away-team-id");
+
+            repository.save(match);
+
+            repository.removeTeamsFromActiveMatches("home-team-id", "away-team-id");
+
+            assertThat(repository.isTeamParticipatingInLiveMatch("home-team-id")).isFalse();
+            assertThat(repository.isTeamParticipatingInLiveMatch("away-team-id")).isFalse();
+        }
+
+        @Test
+        void shouldDoNothingWhenNoTeamToBeRemoved() {
+            repository.removeTeamsFromActiveMatches("home-team-id", "away-team-id");
+
+            assertThat(repository.isTeamParticipatingInLiveMatch("home-team-id")).isFalse();
+            assertThat(repository.isTeamParticipatingInLiveMatch("away-team-id")).isFalse();
+        }
+    }
+
+    @Nested
+    class IsTeamParticipatingInLiveMatch {
+        @Test
+        void shouldReturnTrueIfTeamIsParticipatingInLiveMatch() {
+            var match = match("match-1", "home-team-id", "away-team-id");
+
+            repository.save(match);
+
+            var result = repository.isTeamParticipatingInLiveMatch("home-team-id");
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void shouldReturnFalseIfTeamIsNotParticipatingInLiveMatch() {
+            var result = repository.isTeamParticipatingInLiveMatch("home-team-id");
+
+            assertThat(result).isFalse();
         }
     }
 
@@ -111,6 +157,17 @@ class InMemoryMatchRepositoryTest {
                 matchId,
                 new Team("home-id", "name", "displayName"),
                 new Team("away-id", "name", "displayName"),
+                0,
+                0,
+                false,
+                Instant.now());
+    }
+
+    private Match match(String matchId, String homeTeamId, String awayTeamId) {
+        return new Match(
+                matchId,
+                new Team(homeTeamId, "name", "displayName"),
+                new Team(awayTeamId, "name", "displayName"),
                 0,
                 0,
                 false,

@@ -2,7 +2,7 @@ package org.scoreboard.model;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.scoreboard.exception.ValidationException;
+import org.scoreboard.exception.DomainValidationException;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -57,28 +57,36 @@ public class Match {
         this.isFinished = true;
     }
 
-    public int totalScore() {
+    public int getTotalScore() {
         return homeScore + awayScore;
+    }
+
+    public String getHomeTeamId() {
+        return this.getHomeTeam().teamId();
+    }
+
+    public String getAwayTeamId() {
+        return this.getAwayTeam().teamId();
     }
 
     private void validateTeams(Team homeTeam, Team awayTeam) {
         if (homeTeam == null || awayTeam == null) {
-            throw new ValidationException("Teams cannot be null.");
+            throw new DomainValidationException("Teams cannot be null.");
         }
         if (homeTeam.equals(awayTeam)) {
-            throw new ValidationException("Teams cannot be the same.");
+            throw new DomainValidationException("Teams cannot be the same.");
         }
     }
 
     private void validateScore(int score) {
         if (score < 0) {
-            throw new ValidationException("Scores cannot be negative.");
+            throw new DomainValidationException("Scores cannot be negative.");
         }
     }
 
     private void validateIsFinished() {
         if (isFinished) {
-            throw new ValidationException("Match is already finished.");
+            throw new DomainValidationException("Match is already finished.");
         }
     }
 }

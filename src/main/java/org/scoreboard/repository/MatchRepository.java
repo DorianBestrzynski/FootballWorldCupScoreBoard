@@ -1,7 +1,6 @@
 package org.scoreboard.repository;
 
 import org.scoreboard.model.Match;
-import org.scoreboard.model.Team;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,5 +14,7 @@ public interface MatchRepository {
 
     List<Match> findAll();
 
-    List<Match> findTeamMatches(Team team);
+    void removeTeamsFromActiveMatches(String homeTeamId, String awayTeamId);
+
+    boolean isTeamParticipatingInLiveMatch(String teamId);
 }

@@ -5,16 +5,27 @@ import org.scoreboard.exception.MatchNotFoundException;
 import org.scoreboard.exception.OngoingMatchException;
 import org.scoreboard.model.Match;
 import org.scoreboard.model.Team;
-import org.scoreboard.policy.SortingPolicy;
+import org.scoreboard.repository.InMemoryMatchRepository;
 import org.scoreboard.repository.MatchRepository;
 
+import java.util.Comparator;
 import java.util.List;
+
+import static org.scoreboard.policy.MatchSortingPolicies.highestScoringMatchesFirst;
+import static org.scoreboard.policy.MatchSortingPolicies.mostRecentlyStartedMatchesFirst;
 
 @RequiredArgsConstructor
 public class WorldCupScoreboard implements Scoreboard {
     private final MatchRepository matchRepository;
 
-    private final SortingPolicy<Match> sortingPolicy;
+    private final Comparator<Match> sortingPolicy;
+
+    public static Scoreboard create() {
+        return new WorldCupScoreboard(
+                new InMemoryMatchRepository(),
+                highestScoringMatchesFirst()
+                        .thenComparing(mostRecentlyStartedMatchesFirst()));
+    }
 
     @Override
     public Match startMatch(Team homeTeam, Team awayTeam) {
@@ -41,6 +52,7 @@ public class WorldCupScoreboard implements Scoreboard {
                 .orElseThrow(() -> new MatchNotFoundException(matchId));
         match.finishMatch();
 
+        matchRepository.removeTeamsFromActiveMatches(match.getHomeTeamId(), match.getAwayTeamId());
         return matchRepository.put(match);
     }
 
@@ -48,15 +60,12 @@ public class WorldCupScoreboard implements Scoreboard {
     public List<Match> getSummary() {
         return matchRepository.findAll().stream()
                 .filter(match -> !match.isFinished())
-                .sorted(sortingPolicy.apply())
+                .sorted(sortingPolicy)
                 .toList();
     }
 
     private void validateNoOngoingTeamMatches(Team team) {
-        var ongoingMatches = matchRepository.findTeamMatches(team).stream()
-                .filter(match -> !match.isFinished())
-                .toList();
-        if (!ongoingMatches.isEmpty()) {
+        if (matchRepository.isTeamParticipatingInLiveMatch(team.teamId())) {
             throw new OngoingMatchException(team.teamId());
         }
     }

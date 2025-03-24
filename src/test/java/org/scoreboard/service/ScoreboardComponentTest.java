@@ -4,10 +4,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.scoreboard.exception.MatchNotFoundException;
 import org.scoreboard.exception.OngoingMatchException;
-import org.scoreboard.exception.ValidationException;
+import org.scoreboard.exception.DomainValidationException;
 import org.scoreboard.model.Team;
-import org.scoreboard.policy.SortingByHighestScoreAndMostRecentlyStartedPolicy;
-import org.scoreboard.repository.InMemoryMatchRepository;
 
 import java.time.Instant;
 
@@ -15,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ScoreboardComponentTest {
-    private final Scoreboard scoreboard = createScoreboard();
+    private final Scoreboard scoreboard = WorldCupScoreboard.create();
 
     @Test
     @DisplayName("Start match - should create and store match")
@@ -39,7 +37,7 @@ class ScoreboardComponentTest {
     @DisplayName("validateTeams - should throw ValidationException for null teams")
     void shouldThrowExceptionWhenTeamsAreNull() {
         assertThatThrownBy(() -> scoreboard.startMatch(null, null))
-                .isInstanceOf(ValidationException.class);
+                .isInstanceOf(DomainValidationException.class);
     }
 
     @Test
@@ -48,7 +46,7 @@ class ScoreboardComponentTest {
         var team = createTeam("1", "SameTeam");
 
         assertThatThrownBy(() -> scoreboard.startMatch(team, team))
-                .isInstanceOf(ValidationException.class);
+                .isInstanceOf(DomainValidationException.class);
     }
 
     @Test
@@ -97,7 +95,7 @@ class ScoreboardComponentTest {
         var matchId = match.getMatchId();
 
         assertThatThrownBy(() -> scoreboard.updateScore(matchId, -1, 0))
-                .isInstanceOf(ValidationException.class);
+                .isInstanceOf(DomainValidationException.class);
     }
 
     @Test
@@ -173,12 +171,6 @@ class ScoreboardComponentTest {
         var summary = scoreboard.getSummary();
 
         assertThat(summary).isEmpty();
-    }
-
-    private static WorldCupScoreboard createScoreboard() {
-        var matchRepository = new InMemoryMatchRepository();
-        var sortingPolicy = new SortingByHighestScoreAndMostRecentlyStartedPolicy();
-        return new WorldCupScoreboard(matchRepository, sortingPolicy);
     }
 
     private static Team createTeam(String id, String name) {

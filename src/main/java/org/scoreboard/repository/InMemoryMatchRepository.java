@@ -1,7 +1,6 @@
 package org.scoreboard.repository;
 
 import org.scoreboard.model.Match;
-import org.scoreboard.model.Team;
 
 import java.util.*;
 
@@ -9,6 +8,7 @@ import static java.util.Optional.ofNullable;
 
 public class InMemoryMatchRepository implements MatchRepository {
     private final Map<String, Match> matches = new HashMap<>();
+    private final Set<String> teamsWithLiveMatches = new HashSet<>();
 
     @Override
     public Match save(Match match) {
@@ -16,6 +16,8 @@ public class InMemoryMatchRepository implements MatchRepository {
             throw new IllegalArgumentException("There is already a match with provided id: %s".formatted(match.getMatchId()));
         }
         matches.put(match.getMatchId(), match);
+        teamsWithLiveMatches.add(match.getHomeTeam().teamId());
+        teamsWithLiveMatches.add(match.getAwayTeam().teamId());
         return match;
     }
 
@@ -36,13 +38,13 @@ public class InMemoryMatchRepository implements MatchRepository {
     }
 
     @Override
-    public List<Match> findTeamMatches(Team team) {
-        return matches.values().stream()
-                .filter(match -> isTeamPresentInMatch(team, match))
-                .toList();
+    public void removeTeamsFromActiveMatches(String homeTeamId, String awayTeamId) {
+        teamsWithLiveMatches.remove(homeTeamId);
+        teamsWithLiveMatches.remove(awayTeamId);
     }
 
-    private boolean isTeamPresentInMatch(Team team, Match match) {
-        return match.getHomeTeam().teamId().equals(team.teamId()) || match.getAwayTeam().teamId().equals(team.teamId());
+    @Override
+    public boolean isTeamParticipatingInLiveMatch(String teamId) {
+        return teamsWithLiveMatches.contains(teamId);
     }
 }

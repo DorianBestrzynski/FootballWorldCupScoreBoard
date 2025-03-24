@@ -2,7 +2,7 @@ package org.scoreboard.model;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.scoreboard.exception.ValidationException;
+import org.scoreboard.exception.DomainValidationException;
 
 import java.time.Instant;
 
@@ -35,14 +35,14 @@ class MatchTest {
         @Test
         void shouldThrowExceptionWhenHomeTeamIsNull() {
             assertThatThrownBy(() -> new Match(null, new Team("2", "Away", "Away Team")))
-                    .isInstanceOf(ValidationException.class)
+                    .isInstanceOf(DomainValidationException.class)
                     .hasMessage("Teams cannot be null.");
         }
 
         @Test
         void shouldThrowExceptionWhenAwayTeamIsNull() {
             assertThatThrownBy(() -> new Match(new Team("1", "Home", "Home Team"), null))
-                    .isInstanceOf(ValidationException.class)
+                    .isInstanceOf(DomainValidationException.class)
                     .hasMessage("Teams cannot be null.");
         }
 
@@ -51,7 +51,7 @@ class MatchTest {
             var team = new Team("1", "Team", "Team Name");
 
             assertThatThrownBy(() -> new Match(team, team))
-                    .isInstanceOf(ValidationException.class)
+                    .isInstanceOf(DomainValidationException.class)
                     .hasMessage("Teams cannot be the same.");
         }
     }
@@ -83,7 +83,7 @@ class MatchTest {
             var match = new Match(DUMMY_HOME_TEAM, DUMMY_AWAY_TEAM);
 
             assertThatThrownBy(() -> match.setHomeScore(-1))
-                    .isInstanceOf(ValidationException.class)
+                    .isInstanceOf(DomainValidationException.class)
                     .hasMessage("Scores cannot be negative.");
         }
 
@@ -92,7 +92,7 @@ class MatchTest {
             var match = new Match(DUMMY_HOME_TEAM, DUMMY_AWAY_TEAM);
 
             assertThatThrownBy(() -> match.setAwayScore(-1))
-                    .isInstanceOf(ValidationException.class)
+                    .isInstanceOf(DomainValidationException.class)
                     .hasMessage("Scores cannot be negative.");
         }
     }
@@ -115,7 +115,7 @@ class MatchTest {
             match.finishMatch();
 
             assertThatThrownBy(match::finishMatch)
-                    .isInstanceOf(ValidationException.class)
+                    .isInstanceOf(DomainValidationException.class)
                     .hasMessage("Match is already finished.");
         }
     }
@@ -128,7 +128,7 @@ class MatchTest {
             match.setHomeScore(1);
             match.setAwayScore(2);
 
-            var result = match.totalScore();
+            var result = match.getTotalScore();
 
             assertThat(result).isEqualTo(3);
         }

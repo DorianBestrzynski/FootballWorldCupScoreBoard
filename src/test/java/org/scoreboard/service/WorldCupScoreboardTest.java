@@ -10,10 +10,10 @@ import org.scoreboard.exception.MatchNotFoundException;
 import org.scoreboard.exception.OngoingMatchException;
 import org.scoreboard.model.Match;
 import org.scoreboard.model.Team;
-import org.scoreboard.policy.SortingPolicy;
 import org.scoreboard.repository.MatchRepository;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,7 +27,7 @@ class WorldCupScoreboardTest {
     @Mock
     private MatchRepository matchRepository;
     @Mock
-    private SortingPolicy<Match> sortingPolicy;
+    private Comparator<Match> sortingPolicy;
 
     @InjectMocks
     private WorldCupScoreboard scoreboard;
@@ -54,11 +54,10 @@ class WorldCupScoreboardTest {
             var homeTeam = new Team("1", "Home", "Home Team");
             var awayTeam = new Team("2", "Away", "Away Team");
 
-            var match = createMatch(homeTeam, awayTeam);
-            when(matchRepository.findTeamMatches(homeTeam))
-                    .thenReturn(List.of());
-            when(matchRepository.findTeamMatches(awayTeam))
-                    .thenReturn(List.of(match));
+            when(matchRepository.isTeamParticipatingInLiveMatch("1"))
+                    .thenReturn(false);
+            when(matchRepository.isTeamParticipatingInLiveMatch("2"))
+                    .thenReturn(true);
 
             assertThatThrownBy(() -> scoreboard.startMatch(homeTeam, awayTeam))
                     .isInstanceOf(OngoingMatchException.class)
@@ -140,14 +139,13 @@ class WorldCupScoreboardTest {
 
             when(matchRepository.findAll())
                     .thenReturn(List.of(match1, match2, match3));
-            when(sortingPolicy.apply())
-                    .thenReturn((_, _) -> 0);
+            when(sortingPolicy.compare(any(), any()))
+                    .thenReturn(1);
 
             var result = scoreboard.getSummary();
 
             assertThat(result).containsExactly(match1, match2);
             verify(matchRepository).findAll();
-            verify(sortingPolicy).apply();
         }
     }
 
