@@ -5,6 +5,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.scoreboard.model.Match;
+import org.scoreboard.model.Team;
 
 import java.time.Instant;
 import java.util.List;
@@ -17,7 +18,7 @@ class SortingPoliciesTest {
 
     @BeforeEach
     void setUp() {
-        sortingPolicy = new SortingByHighestScoreAndLastUpdatedPolicy();
+        sortingPolicy = new SortingByHighestScoreAndMostRecentlyStartedPolicy();
     }
 
     @ParameterizedTest(name = "{0}")
@@ -28,7 +29,7 @@ class SortingPoliciesTest {
                 .toList();
 
         assertThat(sortedMatches)
-                .extracting(Match::matchId)
+                .extracting(Match::getMatchId)
                 .containsExactlyElementsOf(expectedOrder);
     }
 
@@ -55,12 +56,14 @@ class SortingPoliciesTest {
         );
     }
 
-    private static Match createMatch(String matchId, int homeScore, int awayScore, Instant lastUpdated) {
-        return Match.builder()
-                .matchId(matchId)
-                .homeScore(homeScore)
-                .awayScore(awayScore)
-                .lastUpdated(lastUpdated)
-                .build();
+    private static Match createMatch(String matchId, int homeScore, int awayScore, Instant startTime) {
+        return new Match(
+                matchId,
+                new Team("home-id", "name", "displayName"),
+                new Team("away-id", "name", "displayName"),
+                homeScore,
+                awayScore,
+                false,
+                startTime);
     }
 }

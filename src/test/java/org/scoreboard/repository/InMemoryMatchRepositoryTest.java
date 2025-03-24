@@ -4,6 +4,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.scoreboard.model.Match;
+import org.scoreboard.model.Team;
+
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,7 +23,7 @@ class InMemoryMatchRepositoryTest {
     class SaveMethod {
         @Test
         void shouldSaveMatchSuccessfully() {
-            var match = Match.builder().matchId("match-1").build();
+            var match = match("match-1");
 
             var result = repository.save(match);
 
@@ -30,10 +33,10 @@ class InMemoryMatchRepositoryTest {
 
         @Test
         void shouldThrowExceptionWhenMatchIdAlreadyExists() {
-            var match = Match.builder().matchId("match-1").build();
+            var match = match("match-1");
             repository.save(match);
 
-            var duplicateMatch = Match.builder().matchId("match-1").build();
+            var duplicateMatch = match("match-1");
 
             assertThatThrownBy(() -> repository.save(duplicateMatch))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -45,7 +48,7 @@ class InMemoryMatchRepositoryTest {
     class PutMethod {
         @Test
         void shouldPutMatchSuccessfully() {
-            var match = Match.builder().matchId("match-1").build();
+            var match = match("match-1");
 
             var result = repository.put(match);
 
@@ -55,10 +58,10 @@ class InMemoryMatchRepositoryTest {
 
         @Test
         void shouldOverrideExistingMatch() {
-            var match1 = Match.builder().matchId("match-1").homeScore(1).build();
+            var match1 = match("match-1");
             repository.put(match1);
 
-            var match2 = Match.builder().matchId("match-1").homeScore(3).build();
+            var match2 = match("match-1");
             repository.put(match2);
 
             assertThat(repository.findById("match-1")).contains(match2);
@@ -69,7 +72,7 @@ class InMemoryMatchRepositoryTest {
     class FindByIdMethod {
         @Test
         void shouldReturnMatchIfExists() {
-            Match match = Match.builder().matchId("match-1").build();
+            var match = match("match-1");
             repository.save(match);
 
             var result = repository.findById("match-1");
@@ -89,8 +92,8 @@ class InMemoryMatchRepositoryTest {
     class FindAllMethod {
         @Test
         void shouldReturnAllMatches() {
-            var match1 = Match.builder().matchId("match-1").build();
-            var match2 = Match.builder().matchId("match-2").build();
+            var match1 = match("match-1");
+            var match2 = match("match-2");
             repository.save(match1);
             repository.save(match2);
 
@@ -101,5 +104,16 @@ class InMemoryMatchRepositoryTest {
         void shouldReturnEmptyCollectionIfNoMatches() {
             assertThat(repository.findAll()).isEmpty();
         }
+    }
+
+    private Match match(String matchId) {
+        return new Match(
+                matchId,
+                new Team("home-id", "name", "displayName"),
+                new Team("away-id", "name", "displayName"),
+                0,
+                0,
+                false,
+                Instant.now());
     }
 }

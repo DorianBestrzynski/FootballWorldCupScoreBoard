@@ -7,7 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.scoreboard.exception.MatchNotFoundException;
-import org.scoreboard.factory.MatchFactory;
+import org.scoreboard.exception.OngoingMatchException;
 import org.scoreboard.model.Match;
 import org.scoreboard.model.Team;
 import org.scoreboard.policy.SortingPolicy;
@@ -20,13 +20,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class WorldCupScoreboardTest {
-    @Mock
-    private MatchFactory matchFactory;
     @Mock
     private MatchRepository matchRepository;
     @Mock
@@ -39,17 +36,33 @@ class WorldCupScoreboardTest {
     class StartMatch {
         @Test
         void shouldCreateAndSaveMatch() {
-            var match = createMatch("match-1", false, 0, 0, Instant.now());
-            when(matchFactory.create(any(), any(), any()))
-                    .thenReturn(match);
+            var homeTeam = new Team("1", "Home", "Home Team");
+            var awayTeam = new Team("2", "Away", "Away Team");
+
+            var match = createMatch(homeTeam, awayTeam);
             when(matchRepository.save(any()))
                     .thenReturn(match);
 
-            var result = scoreboard.startMatch(match.homeTeam(), match.awayTeam());
+            var result = scoreboard.startMatch(homeTeam, awayTeam);
 
             assertThat(result).isSameAs(match);
-            verify(matchFactory).create(same(match.homeTeam()), same(match.awayTeam()), any());
-            verify(matchRepository).save(match);
+            verify(matchRepository, times(1)).save(any(Match.class));
+        }
+
+        @Test
+        void shouldThrowExceptionWhenTeamAlreadyHasOngoingMatch() {
+            var homeTeam = new Team("1", "Home", "Home Team");
+            var awayTeam = new Team("2", "Away", "Away Team");
+
+            var match = createMatch(homeTeam, awayTeam);
+            when(matchRepository.findTeamMatches(homeTeam))
+                    .thenReturn(List.of());
+            when(matchRepository.findTeamMatches(awayTeam))
+                    .thenReturn(List.of(match));
+
+            assertThatThrownBy(() -> scoreboard.startMatch(homeTeam, awayTeam))
+                    .isInstanceOf(OngoingMatchException.class)
+                    .hasMessageContaining("2");
         }
     }
 
@@ -57,21 +70,18 @@ class WorldCupScoreboardTest {
     class UpdateScore {
         @Test
         void shouldUpdateScoreAndSaveMatch() {
-            var existingMatch = createMatch("match-1", false, 1, 0, Instant.now());
-            var updatedMatch = createMatch("match-1", false, 2, 1, Instant.now());
+            var existingMatch = createMatch("match-1");
+            var updatedMatch = createMatch("match-1");
 
             when(matchRepository.findById("match-1"))
                     .thenReturn(Optional.of(existingMatch));
-            when(matchFactory.updateScore(any(), anyInt(), anyInt(), any()))
-                    .thenReturn(updatedMatch);
             when(matchRepository.put(any()))
                     .thenReturn(updatedMatch);
 
             var result = scoreboard.updateScore("match-1", 2, 1);
 
             assertThat(result).isSameAs(updatedMatch);
-            verify(matchFactory).updateScore(same(existingMatch), eq(2), eq(1), any());
-            verify(matchRepository).put(updatedMatch);
+            verify(matchRepository, times(1)).put(any(Match.class));
         }
 
         @Test
@@ -83,7 +93,6 @@ class WorldCupScoreboardTest {
                     .isInstanceOf(MatchNotFoundException.class)
                     .hasMessageContaining("match-1");
 
-            verifyNoInteractions(matchFactory);
             verifyNoMoreInteractions(matchRepository);
         }
     }
@@ -92,20 +101,18 @@ class WorldCupScoreboardTest {
     class FinishMatch {
         @Test
         void shouldFinishMatchAndSave() {
-            var existingMatch = createMatch("match-1", false, 1, 1, Instant.now());
-            var finishedMatch = createMatch("match-1", true, 1, 1, Instant.now());
+            var existingMatch = createMatch("match-1");
+            var finishedMatch = createMatch("match-1");
+            finishedMatch.finishMatch();
 
             when(matchRepository.findById("match-1"))
                     .thenReturn(Optional.of(existingMatch));
-            when(matchFactory.finishMatch(any(), any()))
-                    .thenReturn(finishedMatch);
             when(matchRepository.put(any()))
                     .thenReturn(finishedMatch);
 
             var result = scoreboard.finishMatch("match-1");
 
             assertThat(result).isSameAs(finishedMatch);
-            verify(matchFactory).finishMatch(same(existingMatch), any());
             verify(matchRepository).put(finishedMatch);
         }
 
@@ -118,7 +125,6 @@ class WorldCupScoreboardTest {
                     .isInstanceOf(MatchNotFoundException.class)
                     .hasMessageContaining("match-1");
 
-            verifyNoInteractions(matchFactory);
             verifyNoMoreInteractions(matchRepository);
         }
     }
@@ -127,9 +133,10 @@ class WorldCupScoreboardTest {
     class GetSummary {
         @Test
         void shouldFilterOutFinishedMatches() {
-            var match1 = createMatch("match-1", false, 3, 2, Instant.now());
-            var match2 = createMatch("match-2", false, 1, 0, Instant.now());
-            var match3 = createMatch("match-3", true, 2, 2, Instant.now()); // Finished match, should be ignored
+            var match1 = createMatch("match-1");
+            var match2 = createMatch("match-2");
+            var match3 = createMatch("match-3");
+            match3.finishMatch();
 
             when(matchRepository.findAll())
                     .thenReturn(List.of(match1, match2, match3));
@@ -144,15 +151,18 @@ class WorldCupScoreboardTest {
         }
     }
 
-    private static Match createMatch(String id, boolean isFinished, int homeScore, int awayScore, Instant lastUpdated) {
-        return Match.builder()
-                .matchId(id)
-                .homeTeam(new Team("1", "Home", "Home Team"))
-                .awayTeam(new Team("2", "Away", "Away Team"))
-                .homeScore(homeScore)
-                .awayScore(awayScore)
-                .isFinished(isFinished)
-                .lastUpdated(lastUpdated)
-                .build();
+    private static Match createMatch(Team homeTeam, Team awayTeam) {
+        return new Match(homeTeam, awayTeam);
+    }
+
+    private Match createMatch(String matchId) {
+        return new Match(
+                matchId,
+                new Team("home-id", "name", "displayName"),
+                new Team("away-id", "name", "displayName"),
+                0,
+                0,
+                false,
+                Instant.now());
     }
 }
