@@ -61,7 +61,7 @@ public class Match {
         return homeScore + awayScore;
     }
 
-    private static void validateTeams(Team homeTeam, Team awayTeam) {
+    private void validateTeams(Team homeTeam, Team awayTeam) {
         if (homeTeam == null || awayTeam == null) {
             throw new ValidationException("Teams cannot be null.");
         }
