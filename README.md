@@ -12,13 +12,13 @@ This project implements a **Live Football World Cup Scoreboard** as an in-memory
 ## Simplifications
 - The project does **not** use a database. Instead, it relies on an **in-memory list** (`InMemoryMatchRepository`) to store matches.
 - **Not thread-safe** – concurrent access might lead to inconsistencies, but this can be solved with `ConcurrentHashMap` and `synchronized` blocks.
-- In real work scenario all changes are created in different branches and after review process are merged to master. However for simplification, as I was the only person working on this repo, I was pushing changes directly to master.
-- I was taking into account hexagonal architecture, however for now this library is really simple and has no external sources so I went with simpler approach.
+- In a real-world scenario, all changes are typically made in separate branches and merged into the `master` branch following a thorough review process. However, since I was the sole contributor to this repository, I opted to push changes directly to master for simplicity
+- Additionally, I introduced validation to ensure that a team cannot participate in multiple ongoing matches simultaneously. To optimize this check, rather than iterating over the entire collection of matches, an index should be implemented to enhance query efficiency.
 
 
-## Immutability Approach
-- The core models (`Match`, `Team`) are **immutable** to prevent unintended modifications and improve thread safety.
-- Any update operation creates a **new instance** rather than modifying existing objects.
+## Mutability Approach
+- The core model (`Match`) is **mutable** due to nature of library. Since match updates - such as score changes or status updates - occur frequently, an immutable approach would require creating a new object for every change. This would introduce unnecessary overhead in terms of memory allocation and garbage collection, leading to performance inefficiencies.
+- To maintain data integrity and prevent unintended modifications, access to mutable fields is controlled through encapsulation and validation logic within setter methods. This approach balances performance efficiency with data consistency while keeping the implementation straightforward.
 
 
 ## Tests
@@ -39,6 +39,6 @@ To execute unit and component tests:
 
 ## Notes
 - Matches are sorted in **descending order by total score**.
-- If two matches have the same score, the most **recently updated** match appears first.
+- If two matches have the same score, the most **recently started** match appears first.
 - Once a match **finishes**, it is **removed** from the scoreboard.
 - Finished matches remain in storage for statistics purposes.
