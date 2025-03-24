@@ -2,26 +2,26 @@ package org.scoreboard.service;
 
 import lombok.RequiredArgsConstructor;
 import org.scoreboard.exception.MatchNotFoundException;
-import org.scoreboard.factory.MatchFactory;
+import org.scoreboard.exception.OngoingMatchException;
 import org.scoreboard.model.Match;
 import org.scoreboard.model.Team;
 import org.scoreboard.policy.SortingPolicy;
 import org.scoreboard.repository.MatchRepository;
 
-import java.time.Instant;
 import java.util.List;
 
 @RequiredArgsConstructor
 public class WorldCupScoreboard implements Scoreboard {
-    private final MatchFactory matchFactory;
-
     private final MatchRepository matchRepository;
 
     private final SortingPolicy<Match> sortingPolicy;
 
     @Override
     public Match startMatch(Team homeTeam, Team awayTeam) {
-        var match = matchFactory.create(homeTeam, awayTeam, Instant.now());
+        var match = new Match(homeTeam, awayTeam);
+        validateNoOngoingTeamMatches(homeTeam);
+        validateNoOngoingTeamMatches(awayTeam);
+
         return matchRepository.save(match);
     }
 
@@ -29,17 +29,19 @@ public class WorldCupScoreboard implements Scoreboard {
     public Match updateScore(String matchId, int homeScore, int awayScore) {
         var match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new MatchNotFoundException(matchId));
-        var updatedMatch = matchFactory.updateScore(match, homeScore, awayScore, Instant.now());
-        return matchRepository.put(updatedMatch);
+        match.setHomeScore(homeScore);
+        match.setAwayScore(awayScore);
+
+        return matchRepository.put(match);
     }
 
     @Override
     public Match finishMatch(String matchId) {
         var match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new MatchNotFoundException(matchId));
-        var finishedMatch = matchFactory.finishMatch(match, Instant.now());
+        match.finishMatch();
 
-        return matchRepository.put(finishedMatch);
+        return matchRepository.put(match);
     }
 
     @Override
@@ -48,5 +50,14 @@ public class WorldCupScoreboard implements Scoreboard {
                 .filter(match -> !match.isFinished())
                 .sorted(sortingPolicy.apply())
                 .toList();
+    }
+
+    private void validateNoOngoingTeamMatches(Team team) {
+        var ongoingMatches = matchRepository.findTeamMatches(team).stream()
+                .filter(match -> !match.isFinished())
+                .toList();
+        if (!ongoingMatches.isEmpty()) {
+            throw new OngoingMatchException(team.teamId());
+        }
     }
 }
