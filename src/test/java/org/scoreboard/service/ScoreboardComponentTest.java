@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.scoreboard.exception.MatchNotFoundException;
 import org.scoreboard.exception.OngoingMatchException;
 import org.scoreboard.exception.DomainValidationException;
+import org.scoreboard.model.MatchSummary;
 import org.scoreboard.model.Team;
 
 import java.time.Instant;
@@ -162,7 +163,49 @@ class ScoreboardComponentTest {
 
         var summary = scoreboard.getSummary();
 
-        assertThat(summary).containsExactly(updatedMatch2 ,match4, match3);
+        assertThat(summary).containsExactly(MatchSummary.generateSummary(updatedMatch2) ,MatchSummary.generateSummary(match4), MatchSummary.generateSummary(match3));
+    }
+
+    @Test
+    @DisplayName("Scenario based on example in coding exercise")
+    void shouldReturnInCorrectOrder() throws InterruptedException {
+        var homeTeam1 = createTeam("1", "Mexico");
+        var awayTeam1 = createTeam("2", "Canada");
+        var homeTeam2 = createTeam("3", "Spain");
+        var awayTeam2 = createTeam("4", "Brazil");
+        var homeTeam3 = createTeam("5", "Germany");
+        var awayTeam3 = createTeam("6", "France");
+        var homeTeam4 = createTeam("7", "Uruguay");
+        var awayTeam4 = createTeam("8", "Italy");
+        var homeTeam5 = createTeam("9", "Argentina");
+        var awayTeam5 = createTeam("10", "Australia");
+
+        var match1 = scoreboard.startMatch(homeTeam1, awayTeam1);
+        Thread.sleep(1);
+        var match2 = scoreboard.startMatch(homeTeam2, awayTeam2);
+        Thread.sleep(1);
+        var match3 = scoreboard.startMatch(homeTeam3, awayTeam3);
+        Thread.sleep(1);
+        var match4 = scoreboard.startMatch(homeTeam4, awayTeam4);
+        Thread.sleep(1);
+        var match5 = scoreboard.startMatch(homeTeam5, awayTeam5);
+
+        var updatedMatch1 = scoreboard.updateScore(match1.getMatchId(), 0, 5);
+        var updatedMatch2 = scoreboard.updateScore(match2.getMatchId(), 10, 2);
+        var updatedMatch3 = scoreboard.updateScore(match3.getMatchId(), 2, 2);
+        var updatedMatch4 = scoreboard.updateScore(match4.getMatchId(), 6, 6);
+        var updatedMatch5 = scoreboard.updateScore(match5.getMatchId(), 3, 1);
+
+        var summary = scoreboard.getSummary();
+
+        assertThat(summary)
+                .containsExactly(
+                        MatchSummary.generateSummary(updatedMatch4),
+                        MatchSummary.generateSummary(updatedMatch2),
+                        MatchSummary.generateSummary(updatedMatch1),
+                        MatchSummary.generateSummary(updatedMatch5),
+                        MatchSummary.generateSummary(updatedMatch3)
+                );
     }
 
     @Test

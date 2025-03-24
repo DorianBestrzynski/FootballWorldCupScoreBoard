@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.scoreboard.exception.MatchNotFoundException;
 import org.scoreboard.exception.OngoingMatchException;
 import org.scoreboard.model.Match;
+import org.scoreboard.model.MatchSummary;
 import org.scoreboard.model.Team;
 import org.scoreboard.repository.MatchRepository;
 
@@ -144,7 +145,7 @@ class WorldCupScoreboardTest {
 
             var result = scoreboard.getSummary();
 
-            assertThat(result).containsExactly(match1, match2);
+            assertThat(result).containsExactly(MatchSummary.generateSummary(match1), MatchSummary.generateSummary(match2));
             verify(matchRepository).findAll();
         }
     }

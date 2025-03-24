@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.scoreboard.exception.MatchNotFoundException;
 import org.scoreboard.exception.OngoingMatchException;
 import org.scoreboard.model.Match;
+import org.scoreboard.model.MatchSummary;
 import org.scoreboard.model.Team;
 import org.scoreboard.repository.InMemoryMatchRepository;
 import org.scoreboard.repository.MatchRepository;
@@ -57,10 +58,11 @@ public class WorldCupScoreboard implements Scoreboard {
     }
 
     @Override
-    public List<Match> getSummary() {
+    public List<MatchSummary> getSummary() {
         return matchRepository.findAll().stream()
                 .filter(match -> !match.isFinished())
                 .sorted(sortingPolicy)
+                .map(MatchSummary::generateSummary)
                 .toList();
     }
 
