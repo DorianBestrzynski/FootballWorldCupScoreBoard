@@ -8,7 +8,7 @@ import org.scoreboard.model.Match;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class MatchRepositoryTest {
+class InMemoryMatchRepositoryTest {
     private InMemoryMatchRepository repository;
 
     @BeforeEach

@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ScoreboardTest {
+class WorldCupScoreboardTest {
     @Mock
     private MatchFactory matchFactory;
     @Mock
